@@ -7,6 +7,8 @@ from core import (L, IDS, STATE, CHAT_ID, TH_STD, TH_VIP, COOLDOWN,
 from data import fetch_prices, fetch_movers
 
 COOL = {}
+PUMP_WIN = {'t': 0.0, 'n': 0}
+PUMP_MAX_H = 8
 
 
 def alert_text(chat_id, sym, px, chg, mv):
@@ -16,17 +18,26 @@ def alert_text(chat_id, sym, px, chg, mv):
         s=sym, px=f'{px:,.0f}', chg=f'{chg:.2f}', mv=f'{mv:.2f}', t=t)
 
 
+def _pump_budget(now):
+    '''Rolling hourly cap so the channel never gets spammed.'''
+    if now - PUMP_WIN['t'] > 3600:
+        PUMP_WIN.update(t=now, n=0)
+    return PUMP_WIN['n'] < PUMP_MAX_H
+
+
 async def pump_scan(c):
     '''Notify the channel about coins pumping hard right now.'''
     if not CHAT_ID:
         return
+    now = time.time()
+    if not _pump_budget(now):
+        return
     rows = await fetch_movers()
     if not rows:
         return
-    now = time.time()
     sent = 0
     for d in rows:
-        if sent >= PUMP_MAX:
+        if sent >= PUMP_MAX or not _pump_budget(now):
             break
         try:
             chg = float(d.get('price_change_percentage_24h') or 0.0)
@@ -51,6 +62,7 @@ async def pump_scan(c):
             await c.bot.send_message(chat_id=CHAT_ID, text=text,
                                      parse_mode='HTML')
             PUMP_COOL[cid] = now
+            PUMP_WIN['n'] += 1
             sent += 1
         except Exception as e:
             log.warning('pump alert to %s failed: %s', CHAT_ID, e)
