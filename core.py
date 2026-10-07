@@ -108,7 +108,9 @@ def ensure_user(uid, name=''):
 
 
 def lang_of(uid):
-    return STATE['users'].get(str(uid), {}).get('lang', 'fa')
+    lg = str(STATE['users'].get(str(uid), {}).get('lang', 'fa'))
+    lg = lg.lstrip(':').lower()
+    return 'en' if lg == 'en' else 'fa'
 
 
 def lang_set(uid):

@@ -11,27 +11,13 @@ from screens_b import (ask_add, show_settings, show_ref, show_help,
 async def on_start(u, c):
     uid = u.effective_user.id
     us = ensure_user(uid, u.effective_user.full_name or '')
-    bonus = ''
-    if c.args:
-        payload = c.args[0]
-        if payload.startswith('ref'):
-            src = payload[3:]
-            if src.isdigit() and src != str(uid) and not us.get('referred_by'):
-                us['referred_by'] = src
-                rlist = STATE['refs'].setdefault(src, [])
-                if str(uid) not in rlist:
-                    rlist.append(str(uid))
-                save('users')
-                save('refs')
-                bonus = T(uid, 'ref_hello')
+    # بخش رفرال/زیرمجموعه‌گیری فعلاً لغو شد — به‌زودی با ایده بهتر برمی‌گردد.
     if not lang_set(uid):
-        if bonus:
-            c.user_data['bonus'] = bonus
         await u.effective_message.reply_text(
             T(uid, 'pick', name=us.get('name', '')), reply_markup=lang_kb())
         return
     await u.effective_message.reply_text(
-        T(uid, 'welcome') + '\n\n' + T(uid, 'menu') + bonus,
+        T(uid, 'welcome') + '\n\n' + T(uid, 'menu'),
         parse_mode='HTML', reply_markup=menu_kb(uid))
 
 
@@ -44,7 +30,7 @@ async def on_cb(u, c):
     uid = u.effective_user.id
     if data.startswith('lang:'):
         us = ensure_user(uid, u.effective_user.full_name or '')
-        us['lang'] = data[4:]
+        us['lang'] = data[5:]
         save('users')
         bonus = c.user_data.pop('bonus', '')
         await out(u, T(uid, 'lang_ok') + '\n\n' + T(uid, 'menu') + bonus,
