@@ -12,8 +12,7 @@ from game import show_game, game_action
 async def on_start(u, c):
     uid = u.effective_user.id
     us = ensure_user(uid, u.effective_user.full_name or '')
-   # بخش رفرال/زیرمجموعه‌گیری فعلاً لغو شد — به‌زودی با ایده بهتر برمی‌گردد.
-
+    # بخش رفرال/زیرمجموعه‌گیری فعلاً لغو شد — به‌زودی با ایده بهتر برمی‌گردد.
     if not lang_set(uid):
         await u.effective_message.reply_text(
             T(uid, 'pick', name=us.get('name', '')), reply_markup=lang_kb())
@@ -65,7 +64,7 @@ async def on_cb(u, c):
 
 
 async def on_text(u, c):
-    iid = u.effective_user.id
+    uid = u.effective_user.id
     us = ensure_user(uid, u.effective_user.full_name or '')
     if not lang_set(uid):
         await u.effective_message.reply_text(

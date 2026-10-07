@@ -104,7 +104,7 @@ async def show_list(u, edit=False):
             lines.append(f'{s}: —')
     rows = [[InlineKeyboardButton(f'❌ {s}', callback_data=f'del:{s}')]
             for s in lst]
-        rows.append([InlineKeyboardButton(T(uid, 'btn_add'), callback_data='add'),
-                InlineKeyboardButton(T(uid, 'btn_refresh'), callback_data='list')])
+    rows.append([InlineKeyboardButton(T(uid, 'btn_add'), callback_data='add'),
+                 InlineKeyboardButton(T(uid, 'btn_refresh'), callback_data='list')])
     rows.append([InlineKeyboardButton(T(uid, 'btn_back'), callback_data='menu')])
     await out(u, '\n'.join(lines), InlineKeyboardMarkup(rows), edit)

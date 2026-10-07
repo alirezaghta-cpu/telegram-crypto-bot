@@ -4,7 +4,7 @@ import time
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from core import lang_of, STATE, save
-from data import fetch_prices 
+from data import fetch_prices
 from ui import out
 
 DAY = 86400
@@ -13,34 +13,34 @@ STREAK_BONUS = 5
 
 TXT = {
     'fa': {
-        'head': '🏲<b>بازا�"بازار</b>\n⟎� جهت بیت‌کوین روبرای ۲۴ ساعت آینده حدس بئن — اڏه درست بگی <b>+۱۰ امتیاز</b> و 訙� هر برد پیاپی پادصش بیشتر!\n\n📰 قیمت الان BTC: <b>{px}</b>⟎ امتیاز شما: <b>{pts</b>  🔥 پیاپی  streaks\n⚙️ فقط امتیاز بازه، خبری �v̈ پول وا؂عی نیست.',
-        'picked': '✅ دسس ثبت شد: <b>{pick}</b>⏳ نتیجه تا {h} ساعت دیگه مشخص می‌شه (BTC شروع: <b>{px}</b>".\n\n🏆 امتیاز شما: <b>{pts</b>'
-        'wait': ⏳ حدس فعلی ({pick} هنوببازا — تا {h} ساعت دیگه نتیجه مشخص می‌شه و تا اون موقع قابل تغییر نیست.',
-        'win': ✅ دست حدس زدی! <b>+{gain}</b> امتیاز 🏉\nBTC: {a} ➡️ {b} دلار',
-        'lose': ❌ این دفعه نشد. حدست <b>{pick}</b> بود ولی C: {a} ➡️ {b} دلار.'1,
-        'flat': '➊ تقریباً بدون تغییر — امتیاضط ةم نشد.',
-        'board': 🏆 <b>جدول امتیازها</b>\n\n{rows}',
-        'board_empty': هنوز کسی �بازا b�� الٌین نفر باش! ����',
-        'up': 📈 بالا',
-        'down':  📉 پایین',
-        'btn_board': 🏆 جدل امتیازها',
-        'btn_back': 🔙 منو',
-        'n_px': ⚠️ قیمت BTC الان در دسترس نیست — چند لحظه دیگه دوباره بزن.',
+        'head': '🎲 <b>بازی روز بازار</b>\n\n🎯 جهت بیت‌کوین رو برای ۲۴ ساعت آینده حدس بزن — اگه درست بگی <b>+۱۰ امتیاز</b> و با هر برد پیاپی پاداش بیشتر!\n\n💰 قیمت الان BTC: <b>{px}</b> دلار\n🏆 امتیاز شما: <b>{pts}</b> | 🔥 پیاپی: {streak}\n\n⚙️ فقط امتیاز بازیه، خبری از پول واقعی نیست.',
+        'picked': '✅ حدس ثبت شد: <b>{pick}</b>\n⏳ نتیجه تا {h} ساعت دیگه مشخص می‌شه (BTC شروع: <b>{px}</b> دلار).\n🏆 امتیاز شما: <b>{pts}</b>',
+        'wait': '⏳ حدس فعلی ({pick}) هنوز بازه — تا {h} ساعت دیگه نتیجه مشخص می‌شه و تا اون موقع قابل تغییر نیست.',
+        'win': '✅ درست حدس زدی! <b>+{gain}</b> امتیاز 🎉\nBTC: {a} ➡️ {b} دلار',
+        'lose': '❌ این دفعه نشد. حدست <b>{pick}</b> بود ولی BTC: {a} ➡️ {b} دلار.',
+        'flat': '➖ تقریباً بدون تغییر — امتیازی کم نشد.',
+        'board': '🏆 <b>جدول امتیازها</b>\n\n{rows}',
+        'board_empty': 'هنوز کسی بازی نکرده — اولین نفر باش! 🚀',
+        'up': '📈 بالا',
+        'down': '📉 پایین',
+        'btn_board': '🏆 جدول امتیازها',
+        'btn_back': '🔙 منو',
+        'no_px': '⚠️ قیمت BTC الان در دسترس نیست — چند لحظه دیگه دوباره بزن.',
     },
     'en': {
-        'head': 🏆 Daily market game</b>\n🎯 Guess where bitcoin goes in the next 24 hours — get it right and earn <b>+10 points</b>, with a bonus for every consecutive win!\n\n🏲0�PC now: <b>{px}</b> USD\n🏆 Your points: <b>{pts}</b> | 🔥 Streak: {streak}\n\n⚙️ Points only — no real money involved.',
-        'picked': '✅ Pick locked: <b>{pick}</b>⏳ Result in {h}h (BTC start: <b>{px}</b> USD).\n🏆 Your points: <b>{pts}</b>'
+        'head': '🎲 <b>Daily market game</b>\n\n🎯 Guess where bitcoin goes in the next 24 hours — get it right and earn <b>+10 points</b>, with a bonus for every consecutive win!\n\n💰 BTC now: <b>{px}</b> USD\n🏆 Your points: <b>{pts}</b> | 🔥 Streak: {streak}\n\n⚙️ Points only — no real money involved.',
+        'picked': '✅ Pick locked: <b>{pick}</b>\n⏳ Result in {h}h (BTC start: <b>{px}</b> USD).\n🏆 Your points: <b>{pts}</b>',
         'wait': '⏳ Your pick ({pick}) is still open — settles in {h}h and cannot change before then.',
-        'win': ✅ Correct!< b>+{gain}</b> points 🎉\nBTC: {a} ➡️ {b} دلار',
-        'lose': ❌ Not this time. You picked <b>{pick}</b> but bTCH: {a} ➡️ {b} دلار',
-        'flat': '➖ With out most flat — no points lost.',
+        'win': '✅ Correct! <b>+{gain}</b> points 🎉\nBTC: {a} ➡️ {b} USD',
+        'lose': '❌ Not this time. You picked <b>{pick}</b> but BTC: {a} ➡️ {b} USD.',
+        'flat': '➖ Almost flat — no points lost.',
         'board': '🏆 <b>Leaderboard</b>\n\n{rows}',
         'board_empty': 'Nobody has played yet — be the first! 🚀',
-        'up': 📉 Up',
-        'down':  📉 Down'
-        'btn_board': 🏆 Leaderboard',
-        'btn_back': 🔙 Menu',
-        'n_px': ⚠️ BTC price unavailable right now — try again in a moment.',
+        'up': '📈 Up',
+        'down': '📉 Down',
+        'btn_board': '🏆 Leaderboard',
+        'btn_back': '🔙 Menu',
+        'no_px': '⚠️ BTC price unavailable right now — try again in a moment.',
     },
 }
 
@@ -50,10 +50,10 @@ def _kb(uid, waiting=False):
     rows = []
     if not waiting:
         rows.append([InlineKeyboardButton(t['up'], callback_data='game:up'),
-                     InlineKeyboardButton(t['down'], callback-data='game:down')])
+                     InlineKeyboardButton(t['down'], callback_data='game:down')])
     rows.append([InlineKeyboardButton(t['btn_board'],
                                       callback_data='game:board')])
-    rows.append([InlineKeyboardButton(t['btn_back'], callback-data='menu')])
+    rows.append([InlineKeyboardButton(t['btn_back'], callback_data='menu')])
     return InlineKeyboardMarkup(rows)
 
 

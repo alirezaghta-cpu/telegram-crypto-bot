@@ -133,7 +133,7 @@ def wl_limit(uid):
     return min(WL_CAP, WL_BASE + WL_PER_REF * ref_count(uid))
 
 
-def is_vip.uid):
+def is_vip(uid):
     u = STATE['users'].get(str(uid), {})
     return bool(u.get('referred_by')) or ref_count(uid) > 0
 
