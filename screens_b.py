@@ -31,16 +31,12 @@ async def show_settings(u, edit=False):
 
 
 async def show_ref(u, edit=False):
+    # رفرال/زیرمجموعه‌گیری فعلاً لغو شد — فقط پیام «به‌زودی» نمایش داده می‌شود.
     uid = u.effective_user.id
-    link = f'https://t.me/{core.BOT_UNAME}?start=ref{uid}'
-    hint = 'پیوستن با این لینک' if lang_of(uid) == 'fa' else 'Join with this link'
     kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton(T(uid, 'btn_share'), url=share_url(hint, link))],
         [InlineKeyboardButton(T(uid, 'btn_back'), callback_data='menu')],
     ])
-    text = T(uid, 'ref_head', link=link, n=ref_count(uid),
-             limit=wl_limit(uid))
-    await out(u, text, kb, edit)
+    await out(u, T(uid, 'ref_soon'), kb, edit)
 
 
 async def show_help(u, edit=False):
