@@ -16,8 +16,8 @@ def menu_kb(uid):
          InlineKeyboardButton(T(uid, 'btn_ref'), callback_data='ref')],
         [InlineKeyboardButton(T(uid, 'btn_help'), callback_data='help'),
          InlineKeyboardButton(T(uid, 'btn_lang'), callback_data='langpick')],
-        [InlineKeyboardButton('🎲 بازی روز' if lang_of(uid) == 'fa'
-                              else '🎲 Daily game', callback_data='game')],
+        [InlineKeyboardButton('🎲 چک روزانه' if lang_of(uid) == 'fa'
+                              else '🎲 Daily check', callback_data='game')],
     ])
 
 
