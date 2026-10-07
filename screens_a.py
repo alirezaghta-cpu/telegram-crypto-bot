@@ -7,6 +7,17 @@ from data import fetch_prices, fetch_world
 from ui import out, menu_kb, back_kb
 
 
+def _px(v):
+    '''Format a USD price so small-cap prices stay readable.'''
+    if v >= 1000:
+        return f"{v:,.0f}"
+    if v >= 1:
+        return f"{v:,.2f}"
+    if v >= 0.01:
+        return f"{v:.4f}"
+    return f"{v:.8f}"
+
+
 async def show_menu(u, edit=False):
     uid = u.effective_user.id
     await out(u, T(uid, 'menu'), menu_kb(uid), edit)
@@ -35,6 +46,18 @@ async def show_prices(u, edit=False):
         if fa:
             cls = FNG_CLASS_FA.get(cls, cls)
         lines.append(T(uid, 'fng_line', v=v, c=cls))
+    grid = []
+    for sym in IDS:
+        if sym in ('BTC', 'ETH'):
+            continue
+        d = prices.get(IDS[sym])
+        if d:
+            grid.append(f"{sym}: {_px(d['usd'])} USD "
+                        f"({d.get('usd_24h_change') or 0:.1f}%)")
+    if grid:
+        lines.append('')
+        lines.append('🪙 رمزارزهای مهم:' if fa else '🪙 Major coins:')
+        lines.extend(grid)
     kb = InlineKeyboardMarkup([
         [InlineKeyboardButton(T(uid, 'btn_refresh'), callback_data='prices')],
         [InlineKeyboardButton(T(uid, 'btn_list'), callback_data='list'),
