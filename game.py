@@ -1,4 +1,4 @@
-'''Daily BTC trend game: predict the direction for the next 24h, earn points.'''
+'''Daily check-in game: settle yesterday's BTC pick, then make today's pick.'''
 import time
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -13,9 +13,9 @@ STREAK_BONUS = 5
 
 TXT = {
     'fa': {
-        'head': '🎲 <b>بازی روز بازار</b>\n\n🎯 جهت بیت‌کوین رو برای ۲۴ ساعت آینده حدس بزن — اگه درست بگی <b>+۱۰ امتیاز</b> و با هر برد پیاپی پاداش بیشتر!\n\n💰 قیمت الان BTC: <b>{px}</b> دلار\n🏆 امتیاز شما: <b>{pts}</b> | 🔥 پیاپی: {streak}\n\n⚙️ فقط امتیاز بازیه، خبری از پول واقعی نیست.',
-        'picked': '✅ حدس ثبت شد: <b>{pick}</b>\n⏳ نتیجه تا {h} ساعت دیگه مشخص می‌شه (BTC شروع: <b>{px}</b> دلار).\n🏆 امتیاز شما: <b>{pts}</b>',
-        'wait': '⏳ حدس فعلی ({pick}) هنوز بازه — تا {h} ساعت دیگه نتیجه مشخص می‌شه و تا اون موقع قابل تغییر نیست.',
+        'head': '🎲 <b>چک روزانه بازار</b>\n\n🎯 هر روز یک‌بار بیا، نتیجه دیروز رو ثبت کن و جهت بیت‌کوین رو برای امروز حدس بزن — اگه درست بگی <b>+۱۰ امتیاز</b> و با هر برد پیاپی پاداش بیشتر!\n\n💰 قیمت الان BTC: <b>{px}</b> دلار\n🏆 امتیاز شما: <b>{pts}</b> | 🔥 پیاپی: {streak}\n\n⚙️ فقط امتیاز بازیه، خبری از پول واقعی نیست.',
+        'picked': '✅ حدس امروز ثبت شد: <b>{pick}</b>\n⏳ فردا برگرد تا نتیجه مشخص بشه (شروع: <b>{px}</b> دلار).\n🏆 امتیاز شما: <b>{pts}</b>',
+        'wait': '⏳ حدس دیروز ({pick}) هنوز بازه — فردا که بیای نتیجه ثبت می‌شه (شروع: <b>{px}</b> دلار).',
         'win': '✅ درست حدس زدی! <b>+{gain}</b> امتیاز 🎉\nBTC: {a} ➡️ {b} دلار',
         'lose': '❌ این دفعه نشد. حدست <b>{pick}</b> بود ولی BTC: {a} ➡️ {b} دلار.',
         'flat': '➖ تقریباً بدون تغییر — امتیازی کم نشد.',
@@ -28,9 +28,9 @@ TXT = {
         'no_px': '⚠️ قیمت BTC الان در دسترس نیست — چند لحظه دیگه دوباره بزن.',
     },
     'en': {
-        'head': '🎲 <b>Daily market game</b>\n\n🎯 Guess where bitcoin goes in the next 24 hours — get it right and earn <b>+10 points</b>, with a bonus for every consecutive win!\n\n💰 BTC now: <b>{px}</b> USD\n🏆 Your points: <b>{pts}</b> | 🔥 Streak: {streak}\n\n⚙️ Points only — no real money involved.',
-        'picked': '✅ Pick locked: <b>{pick}</b>\n⏳ Result in {h}h (BTC start: <b>{px}</b> USD).\n🏆 Your points: <b>{pts}</b>',
-        'wait': '⏳ Your pick ({pick}) is still open — settles in {h}h and cannot change before then.',
+        'head': '🎲 <b>Daily market check-in</b>\n\n🎯 Come back once a day: yesterday\'s result settles, then pick where bitcoin goes today — get it right and earn <b>+10 points</b>, with a bonus for every consecutive win!\n\n💰 BTC now: <b>{px}</b> USD\n🏆 Your points: <b>{pts}</b> | 🔥 Streak: {streak}\n\n⚙️ Points only — no real money involved.',
+        'picked': '✅ Today\'s pick locked: <b>{pick}</b>\n⏳ Come back tomorrow for the result (start: <b>{px}</b> USD).\n🏆 Your points: <b>{pts}</b>',
+        'wait': '⏳ Yesterday\'s pick ({pick}) is still open — it settles when you return tomorrow (start: <b>{px}</b> USD).',
         'win': '✅ Correct! <b>+{gain}</b> points 🎉\nBTC: {a} ➡️ {b} USD',
         'lose': '❌ Not this time. You picked <b>{pick}</b> but BTC: {a} ➡️ {b} USD.',
         'flat': '➖ Almost flat — no points lost.',
@@ -58,7 +58,7 @@ def _kb(uid, waiting=False):
 
 
 def _settle(uid, t, px, now):
-    '''Settle an expired pick; returns (result_text, record).'''
+    '''Settle a pick from a previous day; returns (result_text, record).'''
     g = STATE.setdefault('game', {})
     rec = g.get(str(uid), {})
     if not rec.get('ts') or now - rec['ts'] < DAY:
@@ -106,9 +106,9 @@ async def show_game(u, edit=False):
     if result:
         body = result + '\n\n' + body
     if rec.get('ts'):
-        h = max(1, int((rec['ts'] + DAY - time.time()) // 3600) + 1)
         pick = t['up'] if rec.get('pick') == 'up' else t['down']
-        body += '\n\n' + t['wait'].format(pick=pick, h=h)
+        body += '\n\n' + t['wait'].format(
+            pick=pick, px=f"{rec.get('btc') or 0:,.0f}")
     await out(u, body, _kb(uid, waiting=bool(rec.get('ts'))), edit)
 
 
@@ -133,9 +133,9 @@ async def game_action(u, data, edit=True):
         return
     if act in ('up', 'down'):
         if rec.get('ts') and time.time() - rec['ts'] < DAY:
-            h = max(1, int((rec['ts'] + DAY - time.time()) // 3600) + 1)
             pick = t['up'] if rec.get('pick') == 'up' else t['down']
-            await out(u, t['wait'].format(pick=pick, h=h),
+            await out(u, t['wait'].format(
+                          pick=pick, px=f"{rec.get('btc') or 0:,.0f}"),
                       _kb(uid, waiting=True), edit)
             return
         prices = await fetch_prices()
@@ -148,7 +148,7 @@ async def game_action(u, data, edit=True):
         g[str(uid)] = rec
         save('game')
         pick = t['up'] if act == 'up' else t['down']
-        text = t['picked'].format(pick=pick, h=24, px=f"{px:,.0f}",
+        text = t['picked'].format(pick=pick, px=f"{px:,.0f}",
                                   pts=rec.get('pts', 0))
         if result:
             text = result + '\n\n' + text

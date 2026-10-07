@@ -3,8 +3,10 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from core import (T, lang_of, now_fa, now_utc, FNG_CLASS_FA, IDS,
                    wl_limit, is_vip, STATE)
-from data import fetch_prices, fetch_world
+from data import fetch_prices, fetch_world, fetch_commodities
 from ui import out, menu_kb, back_kb
+
+COMM_KEYS = (('brent', 'wti'), ('plat', 'pall'), ('copper', 'gas'))
 
 
 def _px(v):
@@ -27,15 +29,27 @@ async def show_prices(u, edit=False):
     uid = u.effective_user.id
     prices = await fetch_prices()
     world = await fetch_world()
+    comm = await fetch_commodities()
     fa = lang_of(uid) == 'fa'
     lines = [T(uid, 'prices_head', t=now_fa() if fa else now_utc()), '']
     if fa and world.get('dollar'):
-        lines.append(T(uid, 'dollar', v=f"{world['dollar']:,}",
-                       t=world.get('dollar_t', now_fa())))
+        dt = (f"{now_fa()[:10]} {world['dollar_t']}"
+              if world.get('dollar_t') else now_fa())
+        lines.append(T(uid, 'dollar', v=f"{world['dollar']:,}", t=dt))
+    comms = []
     if world.get('gold'):
-        lines.append(T(uid, 'gold', v=f"{world['gold']:,.2f}"))
+        comms.append(T(uid, 'gold', v=f"{world['gold']:,.2f}"))
     if world.get('silver'):
-        lines.append(T(uid, 'silver', v=f"{world['silver']:,.2f}"))
+        comms.append(T(uid, 'silver', v=f"{world['silver']:,.2f}"))
+    for keys in COMM_KEYS:
+        for key in keys:
+            d = comm.get(key)
+            if d:
+                comms.append(T(uid, key, v=f"{d[0]:,.2f}",
+                               c=f"{d[1]:.2f}"))
+    if comms:
+        lines.append(T(uid, 'comm_head'))
+        lines.extend(comms)
     for cg, key in (('bitcoin', 'btc'), ('ethereum', 'eth')):
         d = prices.get(cg)
         if d:

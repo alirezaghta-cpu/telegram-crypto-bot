@@ -1,13 +1,16 @@
-'''Live market data fetchers (CoinGecko, tgju.org, alternative.me).'''
+'''Live market data fetchers (CoinGecko, tgju.org, Yahoo Finance, alternative.me).'''
 import asyncio
 import re
 import time
+from urllib.parse import quote
 
 import httpx
 
 from core import CACHE, IDS, TTL
 
 UA = {'User-Agent': 'alien-market-bot/2.0'}
+YF = {'brent': 'BZ=F', 'wti': 'CL=F', 'plat': 'PL=F',
+      'pall': 'PA=F', 'copper': 'HG=F', 'gas': 'NG=F'}
 
 
 async def fetch_prices():
@@ -31,6 +34,43 @@ async def fetch_prices():
             except Exception:
                 await asyncio.sleep(1.5)
     return CACHE['d']
+
+
+async def fetch_commodities():
+    '''Spot prices for oil, platinum, palladium, copper and gas (Yahoo).'''
+    out = {}
+    async with httpx.AsyncClient(timeout=15, headers=UA) as cl:
+        for key, sym in YF.items():
+            try:
+                r = await cl.get(
+                    'https://query1.finance.yahoo.com/v8/finance/chart/'
+                    + quote(sym),
+                    params={'interval': '1d', 'range': '1d'},
+                )
+                m = r.json()['chart']['result'][0]['meta']
+                out[key] = (float(m['regularMarketPrice']),
+                            float(m.get('regularMarketChangePercent') or 0))
+            except Exception:
+                pass
+    return out
+
+
+async def fetch_movers():
+    '''Top 24h gainers for the pump scanner (best effort).'''
+    try:
+        async with httpx.AsyncClient(timeout=15, headers=UA) as cl:
+            r = await cl.get(
+                'https://api.coingecko.com/api/v3/coins/markets',
+                params={'vs_currency': 'usd',
+                        'order': 'percent_change_24h_desc',
+                        'per_page': '50', 'page': '1',
+                        'price_change_percentage': '24h'},
+            )
+            if r.status_code == 200:
+                return r.json()
+    except Exception:
+        pass
+    return []
 
 
 async def fetch_world():

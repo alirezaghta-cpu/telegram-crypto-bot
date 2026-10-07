@@ -19,6 +19,11 @@ TTL = 60
 COOLDOWN = 4 * 3600
 TH_STD = (5.0, 3.0)
 TH_VIP = (3.0, 2.0)
+PUMP_TH = 10.0
+PUMP_MIN_VOL = 1000000
+PUMP_MAX = 3
+PUMP_COOL = {}
+PUMP_COOL_SEC = 6 * 3600
 WL_BASE, WL_PER_REF, WL_CAP = 10, 5, 50
 IDS = {'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'BNB': 'binancecoin',
        'XRP': 'ripple', 'ADA': 'cardano', 'DOGE': 'dogecoin', 'AVAX': 'avalanche-2',
@@ -139,8 +144,8 @@ def is_vip(uid):
 
 
 def now_fa():
-    return datetime.now(TEH).strftime('%H:%M')
+    return datetime.now(TEH).strftime('%Y-%m-%d %H:%M')
 
 
 def now_utc():
-    return datetime.now(timezone.utc).strftime('%H:%M')
+    return datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
