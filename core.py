@@ -23,9 +23,12 @@ WL_BASE, WL_PER_REF, WL_CAP = 10, 5, 50
 IDS = {'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'BNB': 'binancecoin',
        'XRP': 'ripple', 'ADA': 'cardano', 'DOGE': 'dogecoin', 'AVAX': 'avalanche-2',
        'DOT': 'polkadot', 'LINK': 'chainlink', 'TON': 'the-open-network',
-       'TRX': 'tron', 'LTC': 'litecoin', 'ATOM': 'cosmos'}
+       'TRX': 'tron', 'LTC': 'litecoin', 'ATOM': 'cosmos',
+       'SUI': 'sui', 'HBAR': 'hedera-hashgraph', 'XLM': 'stellar',
+       'NEAR': 'near', 'ARB': 'arbitrum', 'UNI': 'uniswap',
+       'SHIB': 'shiba-inu', 'APT': 'aptos'}
 FILES = {'users': 'state/users.json', 'lists': 'state/userlists.json',
-         'refs': 'state/refs.json'}
+         'refs': 'state/refs.json', 'game': 'state/game.json'}
 STATE = {}
 BOT_UNAME = ''
 CACHE = {'t': 0.0, 'd': {}}
@@ -130,7 +133,7 @@ def wl_limit(uid):
     return min(WL_CAP, WL_BASE + WL_PER_REF * ref_count(uid))
 
 
-def is_vip(uid):
+def is_vip.uid):
     u = STATE['users'].get(str(uid), {})
     return bool(u.get('referred_by')) or ref_count(uid) > 0
 
