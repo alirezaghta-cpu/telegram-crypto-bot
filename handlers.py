@@ -6,12 +6,14 @@ from ui import menu_kb, lang_kb, out
 from screens_a import show_menu, show_prices, show_fng, show_list
 from screens_b import (ask_add, show_settings, show_ref, show_help,
                        show_langpick, toggle_mute)
+from game import show_game, game_action
 
 
 async def on_start(u, c):
     uid = u.effective_user.id
     us = ensure_user(uid, u.effective_user.full_name or '')
-    # بخش رفرال/زیرمجموعه‌گیری فعلاً لغو شد — به‌زودی با ایده بهتر برمی‌گردد.
+   # بخش رفرال/زیرمجموعه‌گیری فعلاً لغو شد — به‌زودی با ایده بهتر برمی‌گردد.
+
     if not lang_set(uid):
         await u.effective_message.reply_text(
             T(uid, 'pick', name=us.get('name', '')), reply_markup=lang_kb())
@@ -44,6 +46,9 @@ async def on_cb(u, c):
             save('lists')
         await show_list(u, edit=True)
         return
+    if data.startswith('game:'):
+        await game_action(u, data, edit=True)
+        return
     if data == 'add':
         c.user_data['wait'] = 'add'
         await ask_add(u, edit=True)
@@ -51,7 +56,7 @@ async def on_cb(u, c):
     routes = {'menu': show_menu, 'prices': show_prices, 'fng': show_fng,
               'list': show_list, 'settings': show_settings, 'ref': show_ref,
               'help': show_help, 'langpick': show_langpick,
-              'mute': toggle_mute}
+              'mute': toggle_mute, 'game': show_game}
     fn = routes.get(data)
     if fn:
         await fn(u, edit=True)
@@ -60,7 +65,7 @@ async def on_cb(u, c):
 
 
 async def on_text(u, c):
-    uid = u.effective_user.id
+    iid = u.effective_user.id
     us = ensure_user(uid, u.effective_user.full_name or '')
     if not lang_set(uid):
         await u.effective_message.reply_text(
