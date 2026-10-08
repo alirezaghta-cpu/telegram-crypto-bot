@@ -32,6 +32,16 @@ IDS = {'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'BNB': 'binancecoin
        'SUI': 'sui', 'HBAR': 'hedera-hashgraph', 'XLM': 'stellar',
        'NEAR': 'near', 'ARB': 'arbitrum', 'UNI': 'uniswap',
        'SHIB': 'shiba-inu', 'APT': 'aptos'}
+# non-crypto watchlist assets -> fetch keys in world/commodities maps
+EXTRA = {'GOLD': 'gold', 'SILVER': 'silver', 'BRENT': 'brent',
+         'WTI': 'wti', 'PLAT': 'plat', 'PALL': 'pall',
+         'COPPER': 'copper', 'GAS': 'gas', 'DOLLAR': 'dollar'}
+CATS = {'crypto': list(IDS.keys()),
+        'comm': ['GOLD', 'SILVER', 'BRENT', 'WTI', 'PLAT', 'PALL',
+                 'COPPER', 'GAS'],
+        'fx': ['DOLLAR']}
+JMONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+           'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند']
 FILES = {'users': 'state/users.json', 'lists': 'state/userlists.json',
          'refs': 'state/refs.json', 'game': 'state/game.json'}
 STATE = {}
@@ -43,6 +53,34 @@ FNG_CLASS_FA = {'Extreme Fear': 'ترس شدید', 'Fear': 'ترس', 'Neutral': 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 log = logging.getLogger('bot')
+
+
+def _jalali(gy, gm, gd):
+    '''Gregorian -> Jalali (jalaali algorithm).'''
+    gdm = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
+    if gy > 1600:
+        jy = 979
+        gy -= 1600
+    else:
+        jy = 0
+        gy -= 621
+    gy2 = gy + 1 if gm > 2 else gy
+    days = (365 * gy) + ((gy2 + 3) // 4) - ((gy2 + 99) // 100) \
+        + ((gy2 + 399) // 400) - 80 + gd + gdm[gm - 1]
+    jy += 33 * (days // 12053)
+    days %= 12053
+    jy += 4 * (days // 1461)
+    days %= 1461
+    if days > 365:
+        jy += (days - 1) // 365
+        days = (days - 1) % 365
+    if days < 186:
+        jm = 1 + days // 31
+        jd = 1 + days % 31
+    else:
+        jm = 7 + (days - 186) // 30
+        jd = 1 + (days - 186) % 30
+    return jy, jm, jd
 
 
 def _load(path, default):
@@ -144,7 +182,10 @@ def is_vip(uid):
 
 
 def now_fa():
-    return datetime.now(TEH).strftime('%Y-%m-%d %H:%M')
+    '''Tehran time with Jalali date, e.g. 16 مهر 1405 — 10:52.'''
+    dt = datetime.now(TEH)
+    jy, jm, jd = _jalali(dt.year, dt.month, dt.day)
+    return f'{jd} {JMONTHS[jm - 1]} {jy} — {dt.strftime("%H:%M")}'
 
 
 def now_utc():
