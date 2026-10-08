@@ -73,6 +73,11 @@ async def fetch_movers():
     return []
 
 
+def _num(v):
+    '''Parse tgju "4,116.02" style strings (fixes missing gold bug).'''
+    return float(str(v).replace(',', '').strip())
+
+
 async def fetch_world():
     out = {}
     nc = int(time.time())
@@ -84,9 +89,16 @@ async def fetch_world():
                     params={'lang': 'fa', 'nc': nc},
                 )
                 j = r.json()
-                out[key] = float(j['data'][0][0])
+                out[key] = _num(j['data'][0][0])
             except Exception:
-                pass
+                # fallback: gold-api.com real-time price
+                sym = 'XAU' if key == 'gold' else 'XAG'
+                try:
+                    r = await cl.get(f'https://api.gold-api.com/price/{sym}')
+                    if r.status_code == 200:
+                        out[key] = float(r.json()['price'])
+                except Exception:
+                    pass
         try:
             r = await cl.get('https://api.alternative.me/fng/?limit=1')
             d = r.json()['data'][0]

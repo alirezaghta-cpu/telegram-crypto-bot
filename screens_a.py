@@ -1,7 +1,7 @@
 '''Screens A: main menu, prices, fear & greed, watchlist.'''
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from core import (T, lang_of, now_fa, now_utc, FNG_CLASS_FA, IDS,
+from core import (T, lang_of, now_fa, now_utc, FNG_CLASS_FA, IDS, EXTRA,
                    wl_limit, is_vip, STATE)
 from data import fetch_prices, fetch_world, fetch_commodities
 from ui import out, menu_kb, back_kb
@@ -20,6 +20,28 @@ def _px(v):
     return f"{v:.8f}"
 
 
+async def _quote_line(sym, prices, world, comm):
+    '''One formatted watchlist line for crypto or non-crypto assets.'''
+    if sym in IDS:
+        d = prices.get(IDS[sym], {})
+        if not d:
+            return f'{sym}: —'
+        return (f"{sym}: {d['usd']:,.0f} USD "
+                f"({d.get('usd_24h_change') or 0:.1f}%)")
+    key = EXTRA.get(sym)
+    if key in ('gold', 'silver'):
+        v = world.get(key)
+        return f'{sym}: {v:,.2f} USD/oz' if v else f'{sym}: —'
+    if key == 'dollar':
+        v = world.get('dollar')
+        return f'{sym}: {v:,} ریال' if v else f'{sym}: —'
+    if key:
+        d = comm.get(key)
+        if d:
+            return f'{sym}: {d[0]:,.2f} USD ({d[1]:.1f}%)'
+    return f'{sym}: —'
+
+
 async def show_menu(u, edit=False):
     uid = u.effective_user.id
     await out(u, T(uid, 'menu'), menu_kb(uid), edit)
@@ -31,11 +53,15 @@ async def show_prices(u, edit=False):
     world = await fetch_world()
     comm = await fetch_commodities()
     fa = lang_of(uid) == 'fa'
-    lines = [T(uid, 'prices_head', t=now_fa() if fa else now_utc()), '']
+    lines = [T(uid, 'prices_head', t=now_fa() if fa else now_utc())]
+    if fa:
+        lines.append(T(uid, 'utc_line', t=now_utc()))
+    lines.append('')
     if fa and world.get('dollar'):
-        dt = (f"{now_fa()[:10]} {world['dollar_t']}"
-              if world.get('dollar_t') else now_fa())
+        dt = world.get('dollar_t') or ''
+        lines.append(T(uid, 'sec_fx'))
         lines.append(T(uid, 'dollar', v=f"{world['dollar']:,}", t=dt))
+        lines.append('')
     comms = []
     if world.get('gold'):
         comms.append(T(uid, 'gold', v=f"{world['gold']:,.2f}"))
@@ -48,30 +74,31 @@ async def show_prices(u, edit=False):
                 comms.append(T(uid, key, v=f"{d[0]:,.2f}",
                                c=f"{d[1]:.2f}"))
     if comms:
-        lines.append(T(uid, 'comm_head'))
+        lines.append(T(uid, 'sec_comm'))
         lines.extend(comms)
+        lines.append('')
+    crypto = []
     for cg, key in (('bitcoin', 'btc'), ('ethereum', 'eth')):
         d = prices.get(cg)
         if d:
-            lines.append(T(uid, key, v=f"{d['usd']:,.0f}",
-                           c=f"{d.get('usd_24h_change') or 0:.2f}"))
-    if world.get('fng'):
-        v, cls = world['fng']
-        if fa:
-            cls = FNG_CLASS_FA.get(cls, cls)
-        lines.append(T(uid, 'fng_line', v=v, c=cls))
-    grid = []
+            crypto.append(T(uid, key, v=f"{d['usd']:,.0f}",
+                            c=f"{d.get('usd_24h_change') or 0:.2f}"))
     for sym in IDS:
         if sym in ('BTC', 'ETH'):
             continue
         d = prices.get(IDS[sym])
         if d:
-            grid.append(f"{sym}: {_px(d['usd'])} USD "
-                        f"({d.get('usd_24h_change') or 0:.1f}%)")
-    if grid:
+            crypto.append(f"{sym}: {_px(d['usd'])} USD "
+                          f"({d.get('usd_24h_change') or 0:.1f}%)")
+    if crypto:
+        lines.append(T(uid, 'sec_crypto'))
+        lines.extend(crypto)
+    if world.get('fng'):
+        v, cls = world['fng']
+        if fa:
+            cls = FNG_CLASS_FA.get(cls, cls)
         lines.append('')
-        lines.append('🪙 رمزارزهای مهم:' if fa else '🪙 Major coins:')
-        lines.extend(grid)
+        lines.append(T(uid, 'fng_line', v=v, c=cls))
     kb = InlineKeyboardMarkup([
         [InlineKeyboardButton(T(uid, 'btn_refresh'), callback_data='prices')],
         [InlineKeyboardButton(T(uid, 'btn_list'), callback_data='list'),
@@ -108,14 +135,11 @@ async def show_list(u, edit=False):
         await out(u, text, kb, edit)
         return
     prices = await fetch_prices()
+    world = await fetch_world()
+    comm = await fetch_commodities()
     lines = [T(uid, 'list_head', n=len(lst), limit=limit, badge=badge), '']
     for s in lst:
-        d = prices.get(IDS.get(s, ''), {})
-        if d:
-            lines.append(f"{s}: {d['usd']:,.0f} USD "
-                         f"({d.get('usd_24h_change') or 0:.1f}%)")
-        else:
-            lines.append(f'{s}: —')
+        lines.append(await _quote_line(s, prices, world, comm))
     rows = [[InlineKeyboardButton(f'❌ {s}', callback_data=f'del:{s}')]
             for s in lst]
     rows.append([InlineKeyboardButton(T(uid, 'btn_add'), callback_data='add'),

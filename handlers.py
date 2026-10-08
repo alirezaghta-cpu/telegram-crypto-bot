@@ -1,11 +1,11 @@
 '''Command, callback-query and plain-text handlers.'''
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from core import (T, STATE, IDS, ensure_user, lang_set, save, wl_limit)
+from core import (T, STATE, IDS, EXTRA, ensure_user, lang_set, save, wl_limit)
 from ui import menu_kb, lang_kb, out
 from screens_a import show_menu, show_prices, show_fng, show_list
-from screens_b import (ask_add, show_settings, show_ref, show_help,
-                       show_langpick, toggle_mute)
+from screens_b import (ask_add, show_cat, add_symbol, show_settings,
+                       show_ref, show_help, show_langpick, toggle_mute)
 from game import show_game, game_action
 
 
@@ -45,6 +45,12 @@ async def on_cb(u, c):
             save('lists')
         await show_list(u, edit=True)
         return
+    if data.startswith('cat:'):
+        await show_cat(u, data[4:], edit=True)
+        return
+    if data.startswith('as:'):
+        await add_symbol(u, data[3:], edit=True)
+        return
     if data.startswith('game:'):
         await game_action(u, data, edit=True)
         return
@@ -72,24 +78,7 @@ async def on_text(u, c):
         return
     if c.user_data.get('wait') == 'add':
         c.user_data['wait'] = None
-        s = (u.effective_message.text or '').strip().upper()
-        if s not in IDS:
-            await u.effective_message.reply_text(
-                T(uid, 'add_bad', s=s), reply_markup=menu_kb(uid))
-            return
-        lst = STATE['lists'].setdefault(str(uid), [])
-        if s in lst:
-            await u.effective_message.reply_text(
-                T(uid, 'add_dup', s=s), reply_markup=menu_kb(uid))
-            return
-        if len(lst) >= wl_limit(uid):
-            await u.effective_message.reply_text(
-                T(uid, 'add_limit', n=wl_limit(uid)), reply_markup=menu_kb(uid))
-            return
-        lst.append(s)
-        save('lists')
-        await u.effective_message.reply_text(
-            T(uid, 'add_ok', s=s), reply_markup=menu_kb(uid))
+        await add_symbol(u, u.effective_message.text or '')
         return
     await u.effective_message.reply_text(
         T(uid, 'hint'), reply_markup=menu_kb(uid))
